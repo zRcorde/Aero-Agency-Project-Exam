@@ -1,0 +1,196 @@
+{
+  "brand": "R. e Agents AI",
+  "tool": "Validador Shopify - AERO Weekly Report Review",
+  "started_at": "2026-09-17T02:35:58.880565+00:00",
+  "finished_at": "2026-09-17T02:36:03.289371+00:00",
+  "duration_seconds": 4.409,
+  "repository": "D:\\IAS agents\\weekly-report-review",
+  "branch": "main",
+  "commit": "8c975fa4ad40fda401233a8f379fb81eb8d3e35c",
+  "source_sha256": "7d48bca2aa530b836810dc49b3e5433a1bb2b8368f98021115b7436b9e3ffd16",
+  "typecheck": {
+    "command": "npm run typecheck",
+    "exit_code": 0,
+    "stdout": "> weekly-report-review@0.1.0 typecheck\n> tsc --noEmit",
+    "stderr": ""
+  },
+  "summary": {
+    "confirmed": 6,
+    "blocking": 5,
+    "non_blocking": 1
+  },
+  "findings": [
+    {
+      "identifier": "logging.secret",
+      "title": "Access token serializado no log de processamento",
+      "status": "CONFIRMED",
+      "severity": "bloqueante",
+      "review_line": 140,
+      "comment": "O objeto shop inclui o accessToken carregado na linha 58; registá-lo por inteiro expõe uma credencial da Shopify no stdout.",
+      "lines": [
+        58,
+        140
+      ],
+      "evidence": {
+        "sample_log": "{\"shop\":{\"id\":7,\"domain\":\"example.myshopify.com\",\"accessToken\":\"SECRET_REDACTED_FOR_VALIDATION\"}}"
+      },
+      "impact": "Cada execução envia a credencial das lojas processadas para stdout."
+    },
+    {
+      "identifier": "idempotency.duplicate",
+      "title": "Retry pode repetir um email já aceite",
+      "status": "CONFIRMED",
+      "severity": "bloqueante",
+      "review_line": 142,
+      "comment": "O retry envolve todo o processShop: se o email for aceite e o INSERT falhar, a tentativa seguinte envia novamente; também não existe verificação prévia de report_sends.",
+      "lines": [
+        120,
+        126,
+        142
+      ],
+      "evidence": {
+        "attempts_used": 2,
+        "email_sends": 2,
+        "insert_attempts": 2,
+        "pre_send_report_sends_check": false
+      },
+      "impact": "Uma falha após a entrega ou uma nova execução viola o máximo de um relatório por semana."
+    },
+    {
+      "identifier": "timezone.contract",
+      "title": "Intervalo semanal calculado no fuso do servidor",
+      "status": "CONFIRMED",
+      "severity": "bloqueante",
+      "review_line": 133,
+      "comment": "O intervalo é calculado uma vez no fuso UTC do servidor e reutilizado em todas as lojas, sem respeitar o iana_timezone de cada loja.",
+      "lines": [
+        36,
+        133
+      ],
+      "evidence": {
+        "server_utc": {
+          "start": "2026-09-07T00:00:00.000Z",
+          "end": "2026-09-13T23:59:59.999Z"
+        },
+        "Europe/Lisbon": {
+          "start": "2026-09-06T23:00:00.000Z",
+          "end": "2026-09-13T22:59:59.999Z"
+        },
+        "America/Sao_Paulo": {
+          "start": "2026-09-07T03:00:00.000Z",
+          "end": "2026-09-14T02:59:59.999Z"
+        }
+      },
+      "impact": "As fronteiras UTC não coincidem com segunda 00:00 e domingo 23:59 no fuso de cada loja."
+    },
+    {
+      "identifier": "shopify.product_fanout",
+      "title": "Pedidos de produto sem deduplicação nem limite de concorrência",
+      "status": "CONFIRMED",
+      "severity": "bloqueante",
+      "review_line": 66,
+      "comment": "É lançado um getProduct por line item em Promise.all, incluindo produtos repetidos e sem limite de concorrência; 300 encomendas com três itens iniciam 900 pedidos contra um bucket de 40.",
+      "lines": [
+        66,
+        67,
+        69
+      ],
+      "evidence": {
+        "scenario_orders": 300,
+        "line_items_per_order": 3,
+        "immediate_requests": 900,
+        "standard_bucket_capacity": 40,
+        "burst_multiple": 22.5
+      },
+      "impact": "A carga pode exceder o bucket da Shopify antes de existir oportunidade de backoff."
+    },
+    {
+      "identifier": "accuracy.partial_top_products",
+      "title": "Falhas de produto são convertidas em dados ausentes",
+      "status": "CONFIRMED",
+      "severity": "bloqueante",
+      "review_line": 71,
+      "comment": "Qualquer erro ao obter um produto, incluindo 429 e 5xx, é convertido em null; o job envia na mesma um top 3 incompleto.",
+      "lines": [
+        71,
+        73
+      ],
+      "evidence": {
+        "caught_errors": [
+          "404",
+          "429",
+          "5xx",
+          "network error"
+        ],
+        "result": "null"
+      },
+      "impact": "O email continua e pode apresentar um top 3 incompleto, contra o contrato do README."
+    },
+    {
+      "identifier": "retry.policy",
+      "title": "Backoff ignora Retry-After e repete erros permanentes",
+      "status": "CONFIRMED",
+      "severity": "não bloqueante",
+      "review_line": 29,
+      "comment": "O backoff não usa Retry-After, não tem jitter e repete também erros permanentes; deve distinguir falhas transitórias de 4xx definitivos.",
+      "lines": [
+        29
+      ],
+      "evidence": {
+        "retry_after_used": false,
+        "delays_ms": [
+          500,
+          1000
+        ]
+      },
+      "impact": "A recuperação de 429 é menos previsível e 4xx permanentes consomem tentativas sem benefício."
+    }
+  ],
+  "fix": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "stdout": "> weekly-report-review@0.1.0 typecheck\n> tsc --noEmit",
+      "stderr": ""
+    },
+    "checks": [
+      {
+        "identifier": "logging.secret",
+        "title": "Access token deixou de ser logado",
+        "status": "CORRIGIDO",
+        "detail": "logger.info agora recebe { shopId, domain } em vez do objeto shop completo (linha 259)."
+      },
+      {
+        "identifier": "idempotency.duplicate",
+        "title": "Envio passou a ser idempotente",
+        "status": "CORRIGIDO",
+        "detail": "A semana é reservada com INSERT ... ON CONFLICT DO NOTHING antes do envio; o email só sai depois de a reserva ser aceite, e um claim sem sucesso é libertado para permitir nova tentativa."
+      },
+      {
+        "identifier": "timezone.contract",
+        "title": "Intervalo semanal passou a respeitar o fuso de cada loja",
+        "status": "CORRIGIDO",
+        "detail": "previousWeekRange recebe agora o iana_timezone da loja e calcula o intervalo civil (segunda 00:00 a domingo 23:59) nesse fuso, usando apenas Intl."
+      },
+      {
+        "identifier": "shopify.product_fanout",
+        "title": "Pedidos de produto passaram a ser deduplicados e limitados",
+        "status": "CORRIGIDO",
+        "detail": "fetchTopProducts deduplica productId e processa em lotes de 5 pedidos concorrentes, com pausa entre lotes."
+      },
+      {
+        "identifier": "accuracy.partial_top_products",
+        "title": "Falha ao obter um produto deixou de gerar relatório incompleto",
+        "status": "CORRIGIDO",
+        "detail": "Um produto que não resolve agora lança ProductLookupError, que impede o envio do email nessa tentativa e é reprocessado pelo retry, em vez de silenciosamente virar null."
+      },
+      {
+        "identifier": "retry.policy",
+        "title": "Backoff passou a respeitar Retry-After e a não repetir erros permanentes",
+        "status": "CORRIGIDO",
+        "detail": "withRetry usa err.retryAfterMs quando a Shopify o envia e relança de imediato erros 4xx diferentes de 429, sem gastar tentativas."
+      }
+    ],
+    "all_corrected": true
+  }
+}

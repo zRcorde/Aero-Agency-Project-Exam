@@ -1,0 +1,16 @@
+{"time": "2026-09-17T02:35:58.977751+00:00", "brand": "R. e Agents AI", "event": "repository_verified", "branch": "main", "commit": "8c975fa4ad40fda401233a8f379fb81eb8d3e35c"}
+{"time": "2026-09-17T02:36:00.634224+00:00", "brand": "R. e Agents AI", "event": "typecheck_finished", "cwd": "D:\\IAS agents\\weekly-report-review", "exit_code": 0}
+{"time": "2026-09-17T02:36:00.634342+00:00", "brand": "R. e Agents AI", "event": "finding_confirmed", "identifier": "logging.secret", "lines": [58, 140], "severity": "bloqueante"}
+{"time": "2026-09-17T02:36:00.634701+00:00", "brand": "R. e Agents AI", "event": "finding_confirmed", "identifier": "idempotency.duplicate", "lines": [120, 126, 142], "severity": "bloqueante"}
+{"time": "2026-09-17T02:36:00.634730+00:00", "brand": "R. e Agents AI", "event": "finding_confirmed", "identifier": "timezone.contract", "lines": [36, 133], "severity": "bloqueante"}
+{"time": "2026-09-17T02:36:00.634769+00:00", "brand": "R. e Agents AI", "event": "finding_confirmed", "identifier": "shopify.product_fanout", "lines": [66, 67, 69], "severity": "bloqueante"}
+{"time": "2026-09-17T02:36:00.634787+00:00", "brand": "R. e Agents AI", "event": "finding_confirmed", "identifier": "accuracy.partial_top_products", "lines": [71, 73], "severity": "bloqueante"}
+{"time": "2026-09-17T02:36:00.634805+00:00", "brand": "R. e Agents AI", "event": "finding_confirmed", "identifier": "retry.policy", "lines": [29], "severity": "não bloqueante"}
+{"time": "2026-09-17T02:36:01.051242+00:00", "brand": "R. e Agents AI", "event": "fix_applied", "workspace": "C:\\Users\\corde\\AppData\\Local\\Temp\\validador-shopify-fix-3olmls7j"}
+{"time": "2026-09-17T02:36:03.289175+00:00", "brand": "R. e Agents AI", "event": "typecheck_finished", "cwd": "C:\\Users\\corde\\AppData\\Local\\Temp\\validador-shopify-fix-3olmls7j", "exit_code": 0}
+{"time": "2026-09-17T02:36:03.289311+00:00", "brand": "R. e Agents AI", "event": "fix_checked", "identifier": "logging.secret", "status": "CORRIGIDO"}
+{"time": "2026-09-17T02:36:03.289329+00:00", "brand": "R. e Agents AI", "event": "fix_checked", "identifier": "idempotency.duplicate", "status": "CORRIGIDO"}
+{"time": "2026-09-17T02:36:03.289339+00:00", "brand": "R. e Agents AI", "event": "fix_checked", "identifier": "timezone.contract", "status": "CORRIGIDO"}
+{"time": "2026-09-17T02:36:03.289344+00:00", "brand": "R. e Agents AI", "event": "fix_checked", "identifier": "shopify.product_fanout", "status": "CORRIGIDO"}
+{"time": "2026-09-17T02:36:03.289352+00:00", "brand": "R. e Agents AI", "event": "fix_checked", "identifier": "accuracy.partial_top_products", "status": "CORRIGIDO"}
+{"time": "2026-09-17T02:36:03.289360+00:00", "brand": "R. e Agents AI", "event": "fix_checked", "identifier": "retry.policy", "status": "CORRIGIDO"}
